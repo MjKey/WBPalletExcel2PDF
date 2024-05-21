@@ -1,0 +1,5 @@
+tkinter
+pandas
+reportlab
+python-barcode
+tkcalendar
