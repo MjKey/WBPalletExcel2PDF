@@ -17,12 +17,10 @@ class PalletApp:
         self.root = root
         self.root.title("Excel to PDF for Wildberries Pallet")
 
-        # Создание списков для выпадающих списков
-        self.destinations = ["Электросталь","Белые Столбы"]  # Пример значений для склада назначения
+        self.destinations = ["Электросталь","Белые Столбы"]
         self.delivery_types = ["Монопалета"]
-        self.company_names = ["ИП Никулин Александр Олегович", "ИП Обухов Роман Романович"]
+        self.company_names = ["ИП Иванов Иван Иванович", "ИП Дмитров Двитрий Дмитрович"]
 
-        # Labels and entries for user inputs
         self.create_label_entry("Номер поставки", 0)
         self.create_dropdown("Склад назначения", self.destinations, 1)
         self.create_dropdown("Тип поставки", self.delivery_types, 2)
@@ -50,7 +48,7 @@ class PalletApp:
         label = tk.Label(self.root, text=label_text)
         label.grid(row=row, column=0, padx=10, pady=5)
         selected_option = tk.StringVar(self.root)
-        selected_option.set(options[0])  # Задаем начальное значение по умолчанию
+        selected_option.set(options[0])
         dropdown = tk.OptionMenu(self.root, selected_option, *options)
         dropdown.grid(row=row, column=1, padx=10, pady=5)
         setattr(self, f"{label_text.replace(' ', '_').replace('.', '').lower()}_dropdown", selected_option)
@@ -71,18 +69,15 @@ class PalletApp:
         try:
             # Read user inputs
             delivery_number = self.номер_поставки_entry.get()
-            destination = self.склад_назначения_dropdown.get()  # Используем значение из выпадающего списка
-            delivery_type = self.тип_поставки_dropdown.get()  # Используем значение из выпадающего списка
-            company_name = self.наименование_юр_лица_dropdown.get()  # Используем значение из выпадающего списка
-            delivery_date = self.дата_поставки_entry.get_date().strftime('%d.%m.%Y')  # Получаем выбранную дату из DateEntry
+            destination = self.склад_назначения_dropdown.get()
+            delivery_type = self.тип_поставки_dropdown.get()
+            company_name = self.наименование_юр_лица_dropdown.get()
+            delivery_date = self.дата_поставки_entry.get_date().strftime('%d.%m.%Y') 
 
-            # Read Excel file
             df = pd.read_excel(self.file_path)
 
-            # Group data by pallet number
             pallet_groups = df.groupby('Номер').agg({'Количество': 'sum', 'Код товара': lambda x: list(x), 'Штрихкод': lambda x: list(x)}).reset_index()
 
-            # Create a report for each pallet
             for _, row in pallet_groups.iterrows():
                 pallet_number = row['Номер']
                 box_count = row['Количество']
@@ -95,13 +90,12 @@ class PalletApp:
             messagebox.showerror("Ошибка", f"Не удалось создать PDF: {e}")
 
     def create_pdf_report(self, pallet_number, total_pallets, box_count, delivery_number, destination, delivery_type, company_name, delivery_date, codes, barcodes):
-        directory = f"./{delivery_number}"  # Путь к директории
-        if not os.path.exists(directory):  # Проверка существования директории
+        directory = f"./{delivery_number}"
+        if not os.path.exists(directory):
             os.makedirs(directory)
         file_name = f"./{directory}/{pallet_number}.pdf"
         c = canvas.Canvas(file_name, pagesize=landscape(A4))
 
-        # Coordinates and dimensions for the table
         table_x = 50
         table_y = 550
         row_height = 48
@@ -111,7 +105,6 @@ class PalletApp:
         pdfmetrics.registerFont(TTFont('Calibri-Bold', 'calibrib.ttf'))
         c.setFont('Calibri', 20)
 
-        # Data for the table
         data = [
             ("Номер палеты", pallet_number),
             ("Количество палет в поставке", total_pallets),
@@ -123,12 +116,10 @@ class PalletApp:
             ("Дата поставки", delivery_date)
         ]
 
-        # Draw table structure
         for i in range(len(data)):
             c.rect(table_x, table_y - (i + 1) * row_height, col_width, row_height)
             c.rect(table_x + col_width, table_y - (i + 1) * row_height, col_width + 5, row_height)
 
-        # Draw text with wrapping
         for i, (label, value) in enumerate(data):
             wrapped_label = textwrap.fill(str(label), width=20)
             wrapped_value = textwrap.fill(str(value), width=20)
@@ -142,7 +133,6 @@ class PalletApp:
             for j, line in enumerate(text_value):
                 c.drawString(table_x + col_width + 5, table_y - (i + 1) * row_height + row_height - 20 - (j * 20), line)
 
-        # Right column for barcodes
         right_x = table_x + 2 * col_width + 50
         barcode_y = table_y - 15
         c.drawString(right_x, barcode_y, "Баркоды:")
@@ -162,7 +152,7 @@ class PalletApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    icon_path = "./1.ico"  # Укажите путь к вашему файлу с иконкой
+    icon_path = "./1.ico"
     root.iconbitmap(icon_path)
     app = PalletApp(root)
     root.mainloop()
